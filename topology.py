@@ -1,4 +1,5 @@
 import math
+from typing import Union
 
 class Topology(): #add topology to constants instead
     """
@@ -6,7 +7,7 @@ class Topology(): #add topology to constants instead
     It assumes they are cylinders with different radii. 
     Optional inputs are of the form of list of tuples [(depth,new radii)}]
     """
-    def __init__(self, inner_radii_boundaries=[(0,4),(3500,3.5),(4500,2.5)], outer_radii_boundaries=[(0,5),(3500,5.5),(4500,6)], bore_wall_boundaries=[(0,10),(3500,8.5)], height=5000.0, dz=100): #each 
+    def __init__(self, inner_radii_boundaries=[(0,4),(3500,3.5),(4500,2.5)], outer_radii_boundaries=[(0,5),(3500,5.5),(4500,6)], bore_wall_boundaries=[(0,10),(3500,8.5)], height=5000.0, dz=100, pipe_roughness=0.0015): #each 
         inner_sorted=sorted(inner_radii_boundaries)
         outer_sorted=sorted(outer_radii_boundaries)
         bore_sorted=sorted(bore_wall_boundaries)
@@ -15,6 +16,7 @@ class Topology(): #add topology to constants instead
         self.borders=[inner_sorted,outer_sorted,bore_sorted]
         self.num_cylinders=len(self.borders)
         self.dz=dz
+        self.pipe_roughness=pipe_roughness
         self.height=height
         self.num_cells=int(height/dz)
 
@@ -41,6 +43,33 @@ class Topology(): #add topology to constants instead
                 'AN areas': self.AN_areas,
                 'pipe areas': self.pipe_areas
             }
+        
+        self.populate_radii()
+        self.calc_cross_sections()
+
+    """
+    Some simple unit conversion methods
+    """
+    def inches_to_meters(self,length: Union[int,float,list]):
+        if type(length) == list:
+            if type(length[0]) == int or type(length[0]) == float: 
+                length = [x*0.0254 for x in length]
+                return length
+        
+        elif type(length) == float or type(length) == int:
+            length = length*0.0254
+            return length
+
+    def meters_to_inches(self,length: Union[int,float,list]):
+        if type(length) == list:
+            if type(length[0]) == int or type(length[0]) == float: 
+                length = [x/0.0254 for x in length]
+                return length
+        
+        elif type(length) == float or type(length) == int:
+            length = length/0.0254
+            return length
+        
 
     """ 
     Methods that populate the radii, 
@@ -152,7 +181,7 @@ class Topology(): #add topology to constants instead
             inner_radius=self.inner_radii[i]
             outer_radius=self.outer_radii[i]
 
-            area=math.pi*((inner_radius**2)-(outer_radius**2))
+            area=math.pi*((outer_radius**2)-(inner_radius**2))
             self.pipe_areas.append(area)
 
         self.topology['pipe areas']=self.pipe_areas
@@ -166,4 +195,3 @@ class Topology(): #add topology to constants instead
         self.calc_DS_cross_sectional_area()
         self.calc_AN_cross_sectional_area()
         self.calc_pipe_cross_section()
-

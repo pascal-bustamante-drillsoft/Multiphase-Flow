@@ -2,24 +2,22 @@ from constants import Coefficients
 from typing import Union
 
 class Temperature(Coefficients):
-    def __init__(self, t_00=60, t_gradient=1.27) -> None:
+    def __init__(self, in_temp=60, dt=1, DS_flow_rate=0.031) -> None:
+        super().__init__(in_temp=in_temp, dt=dt, DS_flow_rate=DS_flow_rate)
         """
         Get important constants and topology
         """
-        self.coefficients=Coefficients()
-        self.num_cells=self.coefficients.constants.num_cells
-        
+        self.num_cells=50
         #initialize starting temperature at equilibrium, based of a gradient
-        self.t_DS=[t_00+(i*t_gradient) for i in range(self.num_cells)]
-        self.t_DS_wall=[t_00+(i*t_gradient) for i in range(self.num_cells)]
-        self.t_AN=[t_00+(i*t_gradient) for i in range(self.num_cells)]
-        self.t_BW=[t_00+(i*t_gradient) for i in range(self.num_cells)] 
+        self.t_DS=[in_temp+(i*1.27) for i in range(self.num_cells)]
+        self.t_DS_wall=[in_temp+(i*1.27) for i in range(self.num_cells)]
+        self.t_AN=[in_temp+(i*1.27) for i in range(self.num_cells)]
+        self.t_BW=[in_temp+(i*1.27) for i in range(self.num_cells)] 
         self.Ar=[self.t_DS,self.t_DS_wall,self.t_AN,self.t_BW]
 
-    def all_temp(self):
-        Ar=[self.t_DS,self.t_DS_wall,self.t_AN,self.t_BW]
-        return Ar
-    
+        self.fahrenheit_to_kelvin(self.Ar)
+        self.calc_temp()
+            
     def fahrenheit_to_kelvin(self, temp: Union[int, float, list]):
         if type(temp) == list:
             if type(temp[0]) == list:
@@ -55,7 +53,7 @@ class Temperature(Coefficients):
             raise ValueError("Kelvin to Fahrenheit function only accepts ints floats or lists")
     
     def calc_temp_DS(self, step):
-        coef = self.coefficients.coef_DS(step)
+        coef = self.coef_DS(step)
 
         if step == 0:
             t1 = self.Ar[0][0]
@@ -77,10 +75,8 @@ class Temperature(Coefficients):
            # if step == 1:
                 #print(t4,coef,((t1*coef[0])+(t2*coef[1])+(t3*coef[2])+coef[3])* 0.02718483757768581,t1,t2,t3)
             
-
-
     def calc_temp_DS_wall(self, step):
-        coef = self.coefficients.coef_DS_wall(step)
+        coef = self.coef_DS_wall(step)
 
         if step == 0:
             t1 = self.Ar[1][0]
@@ -106,7 +102,7 @@ class Temperature(Coefficients):
             self.Ar[1][step] = t6
 
     def calc_temp_AN(self, step):
-        coef = self.coefficients.coef_AN(step)
+        coef = self.coef_AN(step)
 
         if step == 0:
             t1 = self.Ar[2][0]
@@ -140,3 +136,4 @@ class Temperature(Coefficients):
             self.calc_temp_DS(i)
             self.calc_temp_DS_wall(i)
             self.calc_temp_AN(i)
+
